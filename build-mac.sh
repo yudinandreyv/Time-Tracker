@@ -21,12 +21,7 @@ pyinstaller \
     --onefile \
     --clean \
     --name time-tracker \
-    --windowed \
-    --icon=icon.icns \
     main.py
-
-# --windowed = без консольного окна (нужен .icns иконка)
-# Если иконки нет, убери --icon=...
 
 echo ""
 echo "=== Готово ==="

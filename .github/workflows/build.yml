@@ -1,0 +1,81 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyinstaller PyQt5
+
+      - name: Build
+        run: pyinstaller --onefile --clean --name time-tracker main.py
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: time-tracker-linux
+          path: dist/time-tracker
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyinstaller PyQt5
+
+      - name: Build
+        run: pyinstaller --onefile --clean --name time-tracker main.py
+
+      - name: Create .app bundle
+        run: |
+          APP="dist/TimeTracker.app"
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+          cp dist/time-tracker "$APP/Contents/MacOS/"
+          cat > "$APP/Contents/Info.plist" << 'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>TimeTracker</string>
+              <key>CFBundleDisplayName</key>
+              <string>Time Tracker</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.anatoliy.time-tracker</string>
+              <key>CFBundleVersion</key>
+              <string>1.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.13</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Upload macOS app
+        uses: actions/upload-artifact@v4
+        with:
+          name: time-tracker-macos
+          path: dist/TimeTracker.app

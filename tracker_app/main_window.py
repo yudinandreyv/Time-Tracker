@@ -21,8 +21,9 @@ from PyQt5.QtWidgets import (
 
 from .collector import DeltaCollector
 from .file_storage import FileStorage
-from .icons import pin_icon
+from .icons import gear_icon, pin_icon
 from .models import Tracker
+from .settings_dialog import SettingsDialog
 from .stats_window import StatsWindow
 from .tooltip import Tooltip
 from .tracker_window import TrackerWindow
@@ -59,6 +60,7 @@ class MainWindow(QDialog):
         self._tracker_windows: dict[int, TrackerWindow] = {}
         self._tray: QSystemTrayIcon | None = None
         self._stats_window: StatsWindow | None = None
+        self._settings_window: SettingsDialog | None = None
         self._collector = DeltaCollector(storage, self)
 
         self.setWindowTitle("Time Tracker")
@@ -77,6 +79,14 @@ class MainWindow(QDialog):
         root.setContentsMargins(12, 12, 12, 12)
 
         title_row = QHBoxLayout()
+
+        self._settings_btn = QPushButton(gear_icon(), "")
+        self._settings_btn.setFixedWidth(28)
+        self._tooltip = Tooltip(self)
+        self._tooltip.attach(self._settings_btn, "Settings")
+        self._settings_btn.clicked.connect(self._open_settings)
+        title_row.addWidget(self._settings_btn)
+
         title = QLabel("Time Tracker")
         self._title = title
         title.setObjectName("trackerName")
@@ -86,7 +96,6 @@ class MainWindow(QDialog):
         self._pin_btn = QPushButton(pin_icon(), "")
         self._pin_btn.setFixedWidth(28)
         self._pin_btn.setCheckable(True)
-        self._tooltip = Tooltip(self)
         self._tooltip.attach(self._pin_btn, "Поверх всех")
         self._pin_btn.clicked.connect(self._toggle_main_on_top)
         title_row.addWidget(self._pin_btn)
@@ -309,6 +318,20 @@ class MainWindow(QDialog):
         self.activateWindow()
 
     # --- Прочее ---
+
+    def _open_settings(self) -> None:
+        win = self._settings_window
+        if win is not None and win.isVisible():
+            win.raise_()
+            win.activateWindow()
+            return
+        win = SettingsDialog(self._storage)
+        win.finished.connect(self._on_settings_destroyed)
+        self._settings_window = win
+        win.show()
+
+    def _on_settings_destroyed(self, *_args) -> None:
+        self._settings_window = None
 
     def open_stats(self) -> None:
         win = self._stats_window

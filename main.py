@@ -14,13 +14,14 @@ from tracker_app.main_window import MainWindow
 
 def main(argv: list[str] | None = None) -> int:
     app = QApplication(argv if argv is not None else sys.argv)
-    apply_theme(app)
-
-    icon = app_icon()
-    app.setWindowIcon(icon)
 
     db_path = default_db_path()
     storage = FileStorage(db_path)
+    theme = storage.get_setting("theme", "dark")
+    apply_theme(app, theme)
+
+    icon = app_icon()
+    app.setWindowIcon(icon)
 
     window = MainWindow(storage, icon)
     window.show()

@@ -247,9 +247,13 @@ _KEY_COLORS = {
 
 
 def _lerp_color(c1: str, c2: str, t: float) -> str:
-    """Интерполяция между двумя hex-цветами (t: 0..1)."""
+    """Интерполяция между двумя hex-цветами (t: 0..1).
+    Если цвета близки (разница < 30), берём целевой сразу — без анимации."""
     a = QColor(c1)
     b = QColor(c2)
+    diff = abs(a.red() - b.red()) + abs(a.green() - b.green()) + abs(a.blue() - b.blue())
+    if diff < 30:
+        return c2
     r = int(a.red() + (b.red() - a.red()) * t)
     g = int(a.green() + (b.green() - a.green()) * t)
     bl = int(a.blue() + (b.blue() - a.blue()) * t)

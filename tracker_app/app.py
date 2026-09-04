@@ -9,31 +9,31 @@ from PyQt5.QtWidgets import QApplication
 
 DARK_QSS = """
 QWidget {
-    background-color: #1e1f24;
+    background-color: #1a1b1f;
     color: #e5e7eb;
     font-size: 13px;
 }
 QFrame#Panel, QWidget#Card {
-    background-color: #26282e;
-    border: 1px solid #34373f;
+    background-color: #222328;
+    border: 1px solid #363840;
     border-radius: 8px;
 }
 QLineEdit {
-    background-color: #16171b;
-    border: 1px solid #3a3d46;
+    background-color: #141518;
+    border: 1px solid #363840;
     border-radius: 6px;
     padding: 5px 8px;
 }
 QLineEdit:focus { border: 1px solid #7dd3fc; }
 QPushButton {
-    background-color: #2f323a;
-    border: 1px solid #3a3d46;
+    background-color: #2b2d34;
+    border: 1px solid #363840;
     border-radius: 6px;
     padding: 7px 14px;
     font-weight: 600;
 }
-QPushButton:hover { background-color: #383b44; border-color: #4b4f5a; }
-QPushButton:pressed { background-color: #26282e; }
+QPushButton:hover { background-color: #33353c; border-color: #3e4048; }
+QPushButton:pressed { background-color: #2b2d34; }
 QPushButton#primary {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #38bdf8, stop:1 #0ea5e9);
     color: #06121a;
@@ -61,9 +61,9 @@ QLabel#trackerName {
 }
 QLabel#hint { color: #9ca3af; font-size: 11px; }
 QLabel#tooltip {
-    background-color: #ffffff;
-    color: #1e1f24;
-    border: 1px solid #d1d5db;
+    background-color: #222328;
+    color: #e5e7eb;
+    border: 1px solid #363840;
     border-radius: 5px;
     padding: 5px 9px;
     font-size: 11px;
@@ -78,28 +78,28 @@ QTabBar::tab {
 }
 QTabBar::tab:selected { color: #e5e7eb; border-bottom: 2px solid #0ea5e9; }
 QTableWidget {
-    background-color: #16171b;
+    background-color: #141518;
     gridline-color: #2a2d34;
     border: none;
 }
 QHeaderView::section {
-    background-color: #26282e;
+    background-color: #222328;
     color: #9ca3af;
     border: none;
     padding: 5px;
 }
 QComboBox {
-    background-color: #2f323a;
-    border: 1px solid #3a3d46;
+    background-color: #2b2d34;
+    border: 1px solid #363840;
     border-radius: 6px;
     padding: 5px 8px;
     font-weight: 600;
 }
-QComboBox:hover { background-color: #383b44; border-color: #4b4f5a; }
+QComboBox:hover { background-color: #33353c; border-color: #3e4048; }
 QComboBox::drop-down { border: none; }
 QComboBox QAbstractItemView {
-    background-color: #26282e;
-    border: 1px solid #3a3d46;
+    background-color: #222328;
+    border: 1px solid #363840;
     selection-background-color: #0ea5e9;
     selection-color: #06121a;
 }
@@ -107,32 +107,32 @@ QComboBox QAbstractItemView {
 
 LIGHT_QSS = """
 QWidget {
-    background-color: #f5f5f5;
+    background-color: #f0f0f0;
     color: #1e1f24;
     font-size: 13px;
 }
 QFrame#Panel, QWidget#Card {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
+    background-color: #fafafa;
+    border: 1px solid #c8c8c8;
     border-radius: 8px;
 }
 QLineEdit {
     background-color: #ffffff;
-    border: 1px solid #d1d5db;
+    border: 1px solid #c8c8c8;
     border-radius: 6px;
     padding: 5px 8px;
 }
 QLineEdit:focus { border: 1px solid #0ea5e9; }
 QPushButton {
-    background-color: #e5e7eb;
-    border: 1px solid #d1d5db;
+    background-color: #e0e0e0;
+    border: 1px solid #c8c8c8;
     border-radius: 6px;
     padding: 7px 14px;
     font-weight: 600;
-    color: #374151;
+    color: #1e1f24;
 }
-QPushButton:hover { background-color: #d1d5db; border-color: #9ca3af; }
-QPushButton:pressed { background-color: #e5e7eb; }
+QPushButton:hover { background-color: #d0d0d0; border-color: #b0b0b0; }
+QPushButton:pressed { background-color: #e0e0e0; }
 QPushButton#primary {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #38bdf8, stop:1 #0ea5e9);
     color: #06121a;
@@ -160,9 +160,9 @@ QLabel#trackerName {
 }
 QLabel#hint { color: #6b7280; font-size: 11px; }
 QLabel#tooltip {
-    background-color: #1e1f24;
-    color: #f5f5f5;
-    border: 1px solid #374151;
+    background-color: #fafafa;
+    color: #1e1f24;
+    border: 1px solid #c8c8c8;
     border-radius: 5px;
     padding: 5px 9px;
     font-size: 11px;
@@ -178,28 +178,28 @@ QTabBar::tab {
 QTabBar::tab:selected { color: #1e1f24; border-bottom: 2px solid #0ea5e9; }
 QTableWidget {
     background-color: #ffffff;
-    gridline-color: #e5e7eb;
+    gridline-color: #c8c8c8;
     border: none;
 }
 QHeaderView::section {
-    background-color: #f5f5f5;
+    background-color: #f0f0f0;
     color: #6b7280;
     border: none;
     padding: 5px;
 }
 QComboBox {
-    background-color: #e5e7eb;
-    border: 1px solid #d1d5db;
+    background-color: #e0e0e0;
+    border: 1px solid #c8c8c8;
     border-radius: 6px;
     padding: 5px 8px;
     font-weight: 600;
-    color: #374151;
+    color: #1e1f24;
 }
-QComboBox:hover { background-color: #d1d5db; border-color: #9ca3af; }
+QComboBox:hover { background-color: #d0d0d0; border-color: #b0b0b0; }
 QComboBox::drop-down { border: none; }
 QComboBox QAbstractItemView {
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
+    background-color: #fafafa;
+    border: 1px solid #c8c8c8;
     selection-background-color: #0ea5e9;
     selection-color: #06121a;
 }
@@ -207,35 +207,41 @@ QComboBox QAbstractItemView {
 
 THEMES = {"dark": DARK_QSS, "light": LIGHT_QSS}
 
-# Ключевые цвета для интерполяции (hex → QColor)
+# Ключевые цвета для интерполяции — сбалансированные пары
 _KEY_COLORS = {
     "dark": {
-        "QWidget": "#1e1f24",
-        "QWidget#Card": "#26282e",
-        "QPushButton": "#2f323a",
-        "QLineEdit": "#16171b",
+        "QWidget": "#1a1b1f",
+        "QWidget#Card": "#222328",
+        "QPushButton": "#2b2d34",
+        "QPushButton_hov": "#33353c",
+        "QLineEdit": "#141518",
         "QLabel#timer": "#f1f5f9",
-        "QTableWidget": "#16171b",
-        "QHeaderView": "#26282e",
+        "QTableWidget": "#141518",
+        "QHeaderView": "#222328",
         "QTabBar": "#9ca3af",
         "QTabBar_sel": "#e5e7eb",
-        "QComboBox": "#2f323a",
+        "QComboBox": "#2b2d34",
         "color_main": "#e5e7eb",
-        "border_main": "#3a3d46",
+        "color_hint": "#9ca3af",
+        "border_main": "#363840",
+        "border_focus": "#7dd3fc",
     },
     "light": {
-        "QWidget": "#f5f5f5",
-        "QWidget#Card": "#ffffff",
-        "QPushButton": "#e5e7eb",
+        "QWidget": "#f0f0f0",
+        "QWidget#Card": "#fafafa",
+        "QPushButton": "#e0e0e0",
+        "QPushButton_hov": "#d0d0d0",
         "QLineEdit": "#ffffff",
         "QLabel#timer": "#1e1f24",
         "QTableWidget": "#ffffff",
-        "QHeaderView": "#f5f5f5",
+        "QHeaderView": "#f0f0f0",
         "QTabBar": "#6b7280",
         "QTabBar_sel": "#1e1f24",
-        "QComboBox": "#e5e7eb",
+        "QComboBox": "#e0e0e0",
         "color_main": "#1e1f24",
-        "border_main": "#d1d5db",
+        "color_hint": "#6b7280",
+        "border_main": "#c8c8c8",
+        "border_focus": "#0ea5e9",
     },
 }
 
@@ -251,13 +257,13 @@ def _lerp_color(c1: str, c2: str, t: float) -> str:
 
 
 def _build_interpolated_qss(t: float, from_mode: str, to_mode: str) -> str:
-    """Строит QSS с интерполированными ключевыми цветами."""
     c1 = _KEY_COLORS[from_mode]
     c2 = _KEY_COLORS[to_mode]
 
     bg = _lerp_color(c1["QWidget"], c2["QWidget"], t)
     card = _lerp_color(c1["QWidget#Card"], c2["QWidget#Card"], t)
     btn = _lerp_color(c1["QPushButton"], c2["QPushButton"], t)
+    btn_h = _lerp_color(c1["QPushButton_hov"], c2["QPushButton_hov"], t)
     inp = _lerp_color(c1["QLineEdit"], c2["QLineEdit"], t)
     timer_color = _lerp_color(c1["QLabel#timer"], c2["QLabel#timer"], t)
     tbl = _lerp_color(c1["QTableWidget"], c2["QTableWidget"], t)
@@ -266,7 +272,9 @@ def _build_interpolated_qss(t: float, from_mode: str, to_mode: str) -> str:
     tab_sel = _lerp_color(c1["QTabBar_sel"], c2["QTabBar_sel"], t)
     combo = _lerp_color(c1["QComboBox"], c2["QComboBox"], t)
     text = _lerp_color(c1["color_main"], c2["color_main"], t)
+    hint = _lerp_color(c1["color_hint"], c2["color_hint"], t)
     border = _lerp_color(c1["border_main"], c2["border_main"], t)
+    bfocus = _lerp_color(c1["border_focus"], c2["border_focus"], t)
 
     return f"""
 QWidget {{
@@ -285,7 +293,7 @@ QLineEdit {{
     border-radius: 6px;
     padding: 5px 8px;
 }}
-QLineEdit:focus {{ border: 1px solid #0ea5e9; }}
+QLineEdit:focus {{ border: 1px solid {bfocus}; }}
 QPushButton {{
     background-color: {btn};
     border: 1px solid {border};
@@ -294,7 +302,7 @@ QPushButton {{
     font-weight: 600;
     color: {text};
 }}
-QPushButton:hover {{ background-color: {btn}; border-color: {border}; }}
+QPushButton:hover {{ background-color: {btn_h}; border-color: {border}; }}
 QPushButton:pressed {{ background-color: {btn}; }}
 QPushButton#primary {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #38bdf8, stop:1 #0ea5e9);
@@ -321,11 +329,11 @@ QLabel#trackerName {{
     letter-spacing: 0.5px;
     color: {text};
 }}
-QLabel#hint {{ color: {tab}; font-size: 11px; }}
+QLabel#hint {{ color: {hint}; font-size: 11px; }}
 QLabel#tooltip {{
-    background-color: #ffffff;
-    color: #1e1f24;
-    border: 1px solid #d1d5db;
+    background-color: {card};
+    color: {text};
+    border: 1px solid {border};
     border-radius: 5px;
     padding: 5px 9px;
     font-size: 11px;
@@ -382,7 +390,7 @@ def apply_theme(app: QApplication, mode: str = "dark") -> None:
     app.setStyleSheet(get_theme_qss(mode))
 
 
-def smooth_transition(app: QApplication, target_mode: str, duration_ms: int = 1500) -> None:
+def smooth_transition(app: QApplication, target_mode: str, duration_ms: int = 1000) -> None:
     """Плавное переключение темы через интерполяцию цветов."""
     current_qss = app.styleSheet()
     target_qss = get_theme_qss(target_mode)
@@ -390,19 +398,17 @@ def smooth_transition(app: QApplication, target_mode: str, duration_ms: int = 15
     if current_qss == target_qss:
         return
 
-    # Определяем текущую тему по фоновому цвету
-    from_mode = "light" if "#f5f5f5" in current_qss else "dark"
+    from_mode = "light" if "#f0f0f0" in current_qss else "dark"
     if from_mode == target_mode:
         return
 
-    steps = 40
+    steps = 30
     interval = duration_ms // steps
     step = [0]
 
     def _tick():
         step[0] += 1
         t = min(step[0] / steps, 1.0)
-        # Ease-in-out
         t = t * t * (3 - 2 * t)
         qss = _build_interpolated_qss(t, from_mode, target_mode)
         app.setStyleSheet(qss)

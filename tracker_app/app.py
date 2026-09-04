@@ -1,9 +1,8 @@
-"""Тёмная и светлая темы (QSS). Плавное переключение через цветовую интерполяцию."""
+"""Тёмная и светлая темы (QSS). Плавное переключение: 20 предвычисленных шагов."""
 
 from __future__ import annotations
 
-import re
-from PyQt5.QtCore import QEasingCurve, QPropertyAnimation, QTimer, pyqtProperty
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QApplication
 
@@ -207,80 +206,38 @@ QComboBox QAbstractItemView {
 
 THEMES = {"dark": DARK_QSS, "light": LIGHT_QSS}
 
-# Ключевые цвета для интерполяции — сбалансированные пары
-_KEY_COLORS = {
-    "dark": {
-        "QWidget": "#1a1b1f",
-        "QWidget#Card": "#222328",
-        "QPushButton": "#2b2d34",
-        "QPushButton_hov": "#33353c",
-        "QLineEdit": "#141518",
-        "QLabel#timer": "#f1f5f9",
-        "QTableWidget": "#141518",
-        "QHeaderView": "#222328",
-        "QTabBar": "#9ca3af",
-        "QTabBar_sel": "#e5e7eb",
-        "QComboBox": "#2b2d34",
-        "color_main": "#e5e7eb",
-        "color_hint": "#9ca3af",
-        "border_main": "#363840",
-        "border_focus": "#7dd3fc",
-    },
-    "light": {
-        "QWidget": "#f0f0f0",
-        "QWidget#Card": "#fafafa",
-        "QPushButton": "#e0e0e0",
-        "QPushButton_hov": "#d0d0d0",
-        "QLineEdit": "#ffffff",
-        "QLabel#timer": "#1e1f24",
-        "QTableWidget": "#ffffff",
-        "QHeaderView": "#f0f0f0",
-        "QTabBar": "#6b7280",
-        "QTabBar_sel": "#1e1f24",
-        "QComboBox": "#e0e0e0",
-        "color_main": "#1e1f24",
-        "color_hint": "#6b7280",
-        "border_main": "#c8c8c8",
-        "border_focus": "#0ea5e9",
-    },
+# ── Конечные точки палитры (0=dark, 9=light) ──
+_DARK = {
+    "bg":"#1a1b1f","card":"#222328","btn":"#2b2d34","btn_h":"#33353c","inp":"#141518",
+    "timer":"#f1f5f9","tbl":"#141518","hdr":"#222328","tab":"#9ca3af","tab_sel":"#e5e7eb",
+    "combo":"#2b2d34","text":"#e5e7eb","hint":"#9ca3af","border":"#363840",
+}
+_LIGHT = {
+    "bg":"#f0f0f0","card":"#fafafa","btn":"#e0e0e0","btn_h":"#d0d0d0","inp":"#ffffff",
+    "timer":"#1e1f24","tbl":"#ffffff","hdr":"#f0f0f0","tab":"#6b7280","tab_sel":"#1e1f24",
+    "combo":"#e0e0e0","text":"#1e1f24","hint":"#6b7280","border":"#c8c8c8",
 }
 
-
-def _lerp_color(c1: str, c2: str, t: float) -> str:
-    """Интерполяция между двумя hex-цветами (t: 0..1).
-    Если цвета близки (разница < 30), берём целевой сразу — без анимации."""
-    a = QColor(c1)
-    b = QColor(c2)
-    diff = abs(a.red() - b.red()) + abs(a.green() - b.green()) + abs(a.blue() - b.blue())
-    if diff < 30:
-        return c2
-    r = int(a.red() + (b.red() - a.red()) * t)
-    g = int(a.green() + (b.green() - a.green()) * t)
-    bl = int(a.blue() + (b.blue() - a.blue()) * t)
-    return f"#{r:02x}{g:02x}{bl:02x}"
+# Ключи, ОДИНАКОВЫЕ в обеих темах — НЕ интерполируются (accent blue, primary text и т.д.)
+_STATIC_COLORS = {"#0ea5e9", "#06121a", "#38bdf8", "#7dd3fc"}
 
 
-def _build_interpolated_qss(t: float, from_mode: str, to_mode: str) -> str:
-    c1 = _KEY_COLORS[from_mode]
-    c2 = _KEY_COLORS[to_mode]
+def _lerp_hex(c1: str, c2: str, t: float) -> str:
+    a, b = QColor(c1), QColor(c2)
+    return "#{:02x}{:02x}{:02x}".format(
+        int(a.red()   + (b.red()   - a.red())   * t),
+        int(a.green() + (b.green() - a.green()) * t),
+        int(a.blue()  + (b.blue()  - a.blue())  * t),
+    )
 
-    bg = _lerp_color(c1["QWidget"], c2["QWidget"], t)
-    card = _lerp_color(c1["QWidget#Card"], c2["QWidget#Card"], t)
-    btn = _lerp_color(c1["QPushButton"], c2["QPushButton"], t)
-    btn_h = _lerp_color(c1["QPushButton_hov"], c2["QPushButton_hov"], t)
-    inp = _lerp_color(c1["QLineEdit"], c2["QLineEdit"], t)
-    timer_color = _lerp_color(c1["QLabel#timer"], c2["QLabel#timer"], t)
-    tbl = _lerp_color(c1["QTableWidget"], c2["QTableWidget"], t)
-    hdr = _lerp_color(c1["QHeaderView"], c2["QHeaderView"], t)
-    tab = _lerp_color(c1["QTabBar"], c2["QTabBar"], t)
-    tab_sel = _lerp_color(c1["QTabBar_sel"], c2["QTabBar_sel"], t)
-    combo = _lerp_color(c1["QComboBox"], c2["QComboBox"], t)
-    text = _lerp_color(c1["color_main"], c2["color_main"], t)
-    hint = _lerp_color(c1["color_hint"], c2["color_hint"], t)
-    border = _lerp_color(c1["border_main"], c2["border_main"], t)
-    bfocus = _lerp_color(c1["border_focus"], c2["border_focus"], t)
 
-    return f"""
+def _build_palette(step: int, total: int) -> dict:
+    """Одна палитра для шага step (0..total-1)."""
+    t = step / (total - 1)
+    return {k: _lerp_hex(_DARK[k], _LIGHT[k], t) for k in _DARK}
+
+
+_QSS_TPL = """\
 QWidget {{
     background-color: {bg};
     color: {text};
@@ -297,7 +254,7 @@ QLineEdit {{
     border-radius: 6px;
     padding: 5px 8px;
 }}
-QLineEdit:focus {{ border: 1px solid {bfocus}; }}
+QLineEdit:focus {{ border: 1px solid #7dd3fc; }}
 QPushButton {{
     background-color: {btn};
     border: 1px solid {border};
@@ -325,7 +282,7 @@ QLabel#timer {{
     font-size: 34px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: {timer_color};
+    color: {timer};
 }}
 QLabel#trackerName {{
     font-size: 17px;
@@ -380,6 +337,10 @@ QComboBox QAbstractItemView {{
 }}
 """
 
+# 20 предвычисленных шагов (0=dark, 19=light)
+_STEPS = 20
+_STEP_QSS = [_QSS_TPL.format(**_build_palette(i, _STEPS)) for i in range(_STEPS)]
+
 
 def get_theme_qss(mode: str) -> str:
     return THEMES.get(mode, DARK_QSS)
@@ -391,34 +352,37 @@ def apply_theme(app: QApplication, mode: str = "dark") -> None:
     font.setPointSizeF(11.0)
     font.setWeight(QFont.DemiBold)
     app.setFont(font)
-    app.setStyleSheet(get_theme_qss(mode))
+    idx = _STEPS - 1 if mode == "light" else 0
+    app.setStyleSheet(_STEP_QSS[idx])
 
 
 def smooth_transition(app: QApplication, target_mode: str, duration_ms: int = 1000) -> None:
-    """Плавное переключение темы через интерполяцию цветов."""
+    """20 шагов, каждый ~50мс. Шаги предвычислены — без интерполяции на лету."""
     current_qss = app.styleSheet()
-    target_qss = get_theme_qss(target_mode)
 
-    if current_qss == target_qss:
+    from_idx = None
+    for i, s in enumerate(_STEP_QSS):
+        if current_qss == s:
+            from_idx = i
+            break
+    if from_idx is None:
         return
 
-    from_mode = "light" if "#f0f0f0" in current_qss else "dark"
-    if from_mode == target_mode:
+    to_idx = _STEPS - 1 if target_mode == "light" else 0
+    if from_idx == to_idx:
         return
 
-    steps = 30
-    interval = duration_ms // steps
-    step = [0]
+    if to_idx > from_idx:
+        step_list = list(range(from_idx + 1, to_idx + 1))
+    else:
+        step_list = list(range(from_idx - 1, to_idx - 1, -1))
+    interval = duration_ms // max(len(step_list), 1)
+    pos = [0]
 
     def _tick():
-        step[0] += 1
-        t = min(step[0] / steps, 1.0)
-        t = t * t * (3 - 2 * t)
-        qss = _build_interpolated_qss(t, from_mode, target_mode)
-        app.setStyleSheet(qss)
-        if step[0] < steps:
+        app.setStyleSheet(_STEP_QSS[step_list[pos[0]]])
+        pos[0] += 1
+        if pos[0] < len(step_list):
             QTimer.singleShot(interval, _tick)
-        else:
-            app.setStyleSheet(target_qss)
 
     QTimer.singleShot(interval, _tick)

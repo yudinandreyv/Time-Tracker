@@ -7,3 +7,12 @@ build/
 .env
 .venv/
 venv/
+# Distribution / packaging
+.Python
+dist/
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride

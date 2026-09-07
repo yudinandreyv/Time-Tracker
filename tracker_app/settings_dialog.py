@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .app import smooth_transition
+from .i18n import _
 
 
 class ThemeToggle(QWidget):
@@ -52,6 +53,8 @@ class ThemeToggle(QWidget):
         if self._is_light == light:
             return
         self._is_light = light
+        if hasattr(self, "_anim") and self._anim is not None:
+            self._anim.stop()
         anim = QPropertyAnimation(self, b"circle_x")
         anim.setDuration(300)
         anim.setEasingCurve(QEasingCurve.InOutCubic)
@@ -124,6 +127,7 @@ class SettingsDialog(QDialog):
     def __init__(self, storage, parent=None):
         super().__init__(parent)
         self._storage = storage
+        self._on_language_changed_cb = None
         self.setWindowTitle("Settings")
         self.setWindowFlags(
             Qt.Window | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
@@ -139,9 +143,9 @@ class SettingsDialog(QDialog):
         root.setSpacing(16)
 
         # --- Тема ---
-        theme_lbl = QLabel("Тема")
-        theme_lbl.setObjectName("trackerName")
-        root.addWidget(theme_lbl)
+        self._theme_label = QLabel(_("theme"))
+        self._theme_label.setObjectName("trackerName")
+        root.addWidget(self._theme_label)
 
         theme_row = QHBoxLayout()
         self._theme_toggle = ThemeToggle(self)
@@ -151,21 +155,21 @@ class SettingsDialog(QDialog):
         root.addLayout(theme_row)
 
         # --- Язык ---
-        lang_lbl = QLabel("Язык")
-        lang_lbl.setObjectName("trackerName")
-        root.addWidget(lang_lbl)
+        self._lang_label = QLabel(_("language"))
+        self._lang_label.setObjectName("trackerName")
+        root.addWidget(self._lang_label)
 
         self._lang_combo = QComboBox()
-        self._lang_combo.addItems(["Русский", "English"])
+        self._lang_combo.addItems([_("lang_ru"), _("lang_en")])
         self._lang_combo.currentIndexChanged.connect(self._on_lang_changed)
         root.addWidget(self._lang_combo)
 
         root.addStretch()
 
         # --- Закрыть ---
-        close_btn = QPushButton("Закрыть")
-        close_btn.clicked.connect(self.close)
-        root.addWidget(close_btn)
+        self._close_btn = QPushButton(_("close"))
+        self._close_btn.clicked.connect(self.close)
+        root.addWidget(self._close_btn)
 
     def _load_settings(self) -> None:
         theme = self._storage.get_setting("theme", "dark")
@@ -185,6 +189,25 @@ class SettingsDialog(QDialog):
         if qapp is not None:
             smooth_transition(qapp, mode)
 
+    def set_on_language_changed(self, cb) -> None:
+        self._on_language_changed_cb = cb
+
     def _on_lang_changed(self, index: int) -> None:
         lang = "en" if index == 1 else "ru"
         self._storage.set_setting("language", lang)
+        from .i18n import set_language
+        set_language(lang)
+        self._update_texts()
+        if self._on_language_changed_cb:
+            self._on_language_changed_cb()
+
+    def _update_texts(self) -> None:
+        self._theme_label.setText(_("theme"))
+        self._lang_label.setText(_("language"))
+        self._close_btn.setText(_("close"))
+        self._lang_combo.blockSignals(True)
+        self._lang_combo.clear()
+        self._lang_combo.addItems([_("lang_ru"), _("lang_en")])
+        idx = 1 if self._storage.get_setting("language", "ru") == "en" else 0
+        self._lang_combo.setCurrentIndex(idx)
+        self._lang_combo.blockSignals(False)

@@ -28,9 +28,10 @@ from PyQt5.QtWidgets import (
 )
 
 from .file_storage import FileStorage
+from .i18n import _
 from .tracker_window import fmt_duration
 
-TRACKER_HEADERS = ["Имя", "Сегодня", "За всё время", ""]
+TRACKER_HEADERS = lambda: [_("header_name"), _("header_today"), _("header_total"), ""]
 
 
 def _hms(seconds: float) -> str:
@@ -38,10 +39,10 @@ def _hms(seconds: float) -> str:
     h, rem = divmod(seconds, 3600)
     m, s = divmod(rem, 60)
     if h:
-        return f"{h}ч {m:02d}м"
+        return _("time_h_m", h=h, m=m)
     if m:
-        return f"{m}м {s:02d}с"
-    return f"{s}с"
+        return _("time_m_s", m=m, s=s)
+    return _("time_s", s=s)
 
 
 class TablePanel(QWidget):
@@ -50,9 +51,9 @@ class TablePanel(QWidget):
     def __init__(self, title: str, headers: list[str]):
         super().__init__()
         self._lay = QVBoxLayout(self)
-        title_lbl = QLabel(title)
-        title_lbl.setObjectName("trackerName")
-        self._empty_label = QLabel("Нет данных")
+        self._title_label = QLabel(title)
+        self._title_label.setObjectName("trackerName")
+        self._empty_label = QLabel(_("no_data"))
         self._empty_label.setAlignment(Qt.AlignCenter)
         self._empty_label.setObjectName("hint")
         self._table = QTableWidget(0, len(headers))
@@ -62,10 +63,16 @@ class TablePanel(QWidget):
         header = self._table.horizontalHeader()
         for i in range(len(headers) - 1, -1, -1):
             header.setSectionResizeMode(i, QHeaderView.Stretch)
-        self._lay.addWidget(title_lbl)
+        self._lay.addWidget(self._title_label)
         self._lay.addWidget(self._empty_label)
         self._lay.addWidget(self._table)
         self._table.hide()
+
+    def set_title(self, title: str) -> None:
+        self._title_label.setText(title)
+
+    def set_headers(self, headers: list[str]) -> None:
+        self._table.setHorizontalHeaderLabels(headers)
 
     def set_data(self, headers: list[str], rows: list[tuple]) -> None:
         self._table.setRowCount(0)
@@ -90,15 +97,15 @@ class StatsWindow(QDialog):
         super().__init__(parent)
         self._storage = storage
         self._collector = collector
-        self.setWindowTitle("Статистика")
+        self.setWindowTitle(_("stats_title"))
         self.setWindowFlags(
             Qt.Window | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
             | Qt.WindowCloseButtonHint
         )
         self.resize(800, 600)
 
-        self._daily_panel = TablePanel("Сумма времени по дням", ["Дата", "Время"])
-        self._track_panel = TablePanel("Время по трекерам (за всё время)", ["Трекер", "Время"])
+        self._daily_panel = TablePanel(_("by_days"), [_("header_date"), _("header_time")])
+        self._track_panel = TablePanel(_("by_trackers"), [_("header_tracker"), _("header_time")])
 
         self._build_ui()
         self._collector.collected.connect(self._refresh_ui)
@@ -111,31 +118,31 @@ class StatsWindow(QDialog):
         self._total_label = QLabel()
         self._total_label.setObjectName("trackerName")
         header.addWidget(self._total_label)
-        self._refresh_btn = QPushButton("Обновить")
+        self._refresh_btn = QPushButton(_("refresh"))
         self._refresh_btn.clicked.connect(self.collect_now)
         header.addWidget(self._refresh_btn)
         root.addLayout(header)
 
-        tabs = QTabWidget()
+        self._tabs = QTabWidget()
 
         w_daily = QWidget()
         lay_daily = QVBoxLayout(w_daily)
         lay_daily.addWidget(self._daily_panel)
-        tabs.addTab(w_daily, "По дням")
+        self._tabs.addTab(w_daily, _("tab_days"))
 
         w_track = QWidget()
         lay_track = QVBoxLayout(w_track)
         lay_track.addWidget(self._track_panel)
-        tabs.addTab(w_track, "По трекерам")
+        self._tabs.addTab(w_track, _("tab_trackers"))
 
-        tabs.addTab(self._build_tracker_list_tab(), "Трекеры")
-        root.addWidget(tabs)
+        self._tabs.addTab(self._build_tracker_list_tab(), _("tab_all"))
+        root.addWidget(self._tabs)
 
     def _build_tracker_list_tab(self) -> QWidget:
         w = QWidget()
         lay = QVBoxLayout(w)
-        self._tracker_table = QTableWidget(0, len(TRACKER_HEADERS))
-        self._tracker_table.setHorizontalHeaderLabels(TRACKER_HEADERS)
+        self._tracker_table = QTableWidget(0, len(TRACKER_HEADERS()))
+        self._tracker_table.setHorizontalHeaderLabels(TRACKER_HEADERS())
         self._tracker_table.verticalHeader().setVisible(False)
         header = self._tracker_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -160,24 +167,24 @@ class StatsWindow(QDialog):
 
         today = date.today().isoformat()
         today_total = self._storage.total_today() + sum(v for v in live.values())
-        self._total_label.setText(f"Сегодня: {fmt_duration(today_total)}")
+        self._total_label.setText(_("today_label", time=fmt_duration(today_total)))
 
         per_day = self._storage.per_day()
         if per_day:
             self._daily_panel.set_data(
-                ["Дата", "Время"], [(d, _hms(v)) for d, v in per_day]
+                [_("header_date"), _("header_time")], [(d, _hms(v)) for d, v in per_day]
             )
         else:
-            self._daily_panel.show_empty("Нет данных по дням")
+            self._daily_panel.show_empty(_("no_days_data"))
 
         per_tracker = self._storage.per_tracker_total()
         if per_tracker:
             self._track_panel.set_data(
-                ["Трекер", "Время"],
+                [_("header_tracker"), _("header_time")],
                 [(name, _hms(v + live.get(tid, 0))) for name, v, tid in per_tracker],
             )
         else:
-            self._track_panel.show_empty("Нет данных по трекерам")
+            self._track_panel.show_empty(_("no_trackers_data"))
 
         self._populate_tracker_list(live, today)
 
@@ -201,9 +208,9 @@ class StatsWindow(QDialog):
             lay = QHBoxLayout(actions)
             lay.setContentsMargins(2, 2, 2, 2)
             lay.setSpacing(4)
-            close_btn = QPushButton("Закрыть")
+            close_btn = QPushButton(_("close"))
             close_btn.clicked.connect(lambda _, tid=tr.id: self._close_tracker(tid))
-            del_btn = QPushButton("Удалить")
+            del_btn = QPushButton(_("delete"))
             del_btn.clicked.connect(lambda _, tid=tr.id: self._delete_tracker(tid))
             lay.addWidget(close_btn)
             lay.addWidget(del_btn)
@@ -219,10 +226,10 @@ class StatsWindow(QDialog):
         if self._collector is not None:
             self._collector.pause_tracking(tracker_id)
         tracker = self._storage.get_tracker(tracker_id)
-        name = tracker.name if tracker else "этот трекер"
+        name = tracker.name if tracker else _("this_tracker")
         answer = QMessageBox.question(
-            self, "Удалить трекер",
-            f"Удалить «{name}» и всю его статистику?",
+            self, _("delete_title"),
+            _("delete_confirm", name=name),
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
         )
         if answer != QMessageBox.Yes:
@@ -239,3 +246,18 @@ class StatsWindow(QDialog):
             except TypeError:
                 pass
         super().closeEvent(event)
+
+    def _refresh_texts(self) -> None:
+        self.setWindowTitle(_("stats_title"))
+        self._refresh_btn.setText(_("refresh"))
+        self._total_label.setText(_("today_label", time=fmt_duration(
+            self._storage.total_today())))
+        self._daily_panel.set_title(_("by_days"))
+        self._daily_panel.set_headers([_("header_date"), _("header_time")])
+        self._track_panel.set_title(_("by_trackers"))
+        self._track_panel.set_headers([_("header_tracker"), _("header_time")])
+        self._tabs.setTabText(0, _("tab_days"))
+        self._tabs.setTabText(1, _("tab_trackers"))
+        self._tabs.setTabText(2, _("tab_all"))
+        self._tracker_table.setHorizontalHeaderLabels(TRACKER_HEADERS())
+        self.collect_now()

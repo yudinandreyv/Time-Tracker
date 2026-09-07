@@ -39,7 +39,7 @@ class DeltaCollector(QObject):
         self._long_interval = False  # чередование 10/15 через bool
         self._day = date.today().isoformat()
         self._timer = QTimer(self)
-        self._timer.timeout.connect(self.collect_now)
+        self._timer.timeout.connect(self._on_timer_tick)
         self._timer.start(INTERVAL_SHORT)
         self._midnight_timer = QTimer(self)
         self._midnight_timer.timeout.connect(self._check_midnight)
@@ -72,19 +72,25 @@ class DeltaCollector(QObject):
         self._prev.pop(tracker_id, None)
 
     def collect_now(self) -> None:
-        """Единая функция накопления: дельты + сигнал. (кнопка и авто-таймер)"""
+        """Внешний вызов: только дельты + сигнал, без смены интервала."""
         try:
-            # чередование интервала через bool: 10 -> 15 -> 10 -> 15 …
+            self._collect_deltas()
+        except Exception:
+            import traceback
+            traceback.print_exc()
+        self.collected.emit()
+
+    def _on_timer_tick(self) -> None:
+        """Внутренний таймер: дельты + сигнал + чередование интервала."""
+        try:
             if self._long_interval:
                 self._timer.setInterval(INTERVAL_LONG)
             else:
                 self._timer.setInterval(INTERVAL_SHORT)
             self._long_interval = not self._long_interval
-
             self._collect_deltas()
         except Exception:
             import traceback
-
             traceback.print_exc()
         self.collected.emit()
 

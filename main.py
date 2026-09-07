@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QApplication
 
 from tracker_app.app import apply_theme
 from tracker_app.file_storage import FileStorage, default_db_path
+from tracker_app.i18n import set_language
 from tracker_app.icons import app_icon
 from tracker_app.main_window import MainWindow
 
@@ -19,6 +20,9 @@ def main(argv: list[str] | None = None) -> int:
     storage = FileStorage(db_path)
     theme = storage.get_setting("theme", "dark")
     apply_theme(app, theme)
+
+    lang = storage.get_setting("language", "ru")
+    set_language(lang)
 
     icon = app_icon()
     app.setWindowIcon(icon)

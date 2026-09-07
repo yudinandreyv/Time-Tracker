@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from .i18n import _
 from .icons import close_gray_icon, pin_icon
 from .models import Tracker
 from .timer import TimerEngine
@@ -47,6 +48,11 @@ class TrackerWindow(QWidget):
         self._ui_timer.timeout.connect(self._refresh)
         self._ui_timer.start(100)
 
+        self._name_debounce = QTimer(self)
+        self._name_debounce.setSingleShot(True)
+        self._name_debounce.setInterval(300)
+        self._name_debounce.timeout.connect(self._commit_name)
+
         self.setWindowTitle(tracker.name)
         self.setWindowFlag(Qt.FramelessWindowHint)
         self.setWindowFlag(Qt.WindowStaysOnTopHint, tracker.always_on_top)
@@ -72,7 +78,7 @@ class TrackerWindow(QWidget):
         self._pin_btn.setCheckable(True)
         self._pin_btn.setChecked(self._tracker.always_on_top)
         self._tooltip = Tooltip(self)
-        self._tooltip.attach(self._pin_btn, "Поверх всех окон")
+        self._tooltip.attach(self._pin_btn, _("pin_tracker"))
         self._pin_btn.clicked.connect(self._toggle_always_on_top)
         header.addWidget(self._pin_btn)
 
@@ -88,7 +94,7 @@ class TrackerWindow(QWidget):
         root.addWidget(self._time_label)
 
         controls = QHBoxLayout()
-        self._start_btn = QPushButton("▶ Старт")
+        self._start_btn = QPushButton(_("start"))
         self._start_btn.setObjectName("primary")
         glow = QGraphicsDropShadowEffect(self._start_btn)
         glow.setBlurRadius(20)
@@ -107,7 +113,7 @@ class TrackerWindow(QWidget):
         controls.addWidget(self._stop_btn)
         root.addLayout(controls)
 
-        self._hint = QLabel("Введите имя задачи, затем ▶ Старт")
+        self._hint = QLabel(_("hint_start"))
         self._hint.setObjectName("hint")
         self._hint.setAlignment(Qt.AlignCenter)
         root.addWidget(self._hint)
@@ -158,10 +164,13 @@ class TrackerWindow(QWidget):
         self.running_changed.emit(running)
 
     def _on_name_changed(self, name: str) -> None:
-        cleaned = name.strip()
-        if cleaned:
-            self._tracker.name = cleaned
-            self.name_changed.emit(self._tracker.id, cleaned)
+        self._name_debounce.start()
+
+    def _commit_name(self) -> None:
+        name = self._name_edit.text().strip()
+        if name and self._tracker.id is not None:
+            self._tracker.name = name
+            self.name_changed.emit(self._tracker.id, name)
 
     def _toggle_always_on_top(self, checked: bool) -> None:
         self.set_always_on_top(checked)
@@ -190,7 +199,8 @@ class TrackerWindow(QWidget):
         self._persist_elapsed()
         if not self._app_quit:
             self._timer_engine.pause()
-        self.closed.emit(self._tracker.id or -1)
+        if self._tracker.id is not None:
+            self.closed.emit(self._tracker.id)
         super().closeEvent(event)
 
     def mousePressEvent(self, event) -> None:

@@ -60,6 +60,14 @@ class FileStorage:
             data = _decode(p.read_bytes())
             obj = __import__("json").loads(data.decode("utf-8"))
         except Exception:
+            # Бэкап битого файла перед перезаписью
+            try:
+                import shutil
+                from time import time
+                backup = f"{self._path}.corrupt.{int(time())}"
+                shutil.copy2(self._path, backup)
+            except Exception:
+                pass
             obj = None
         if not isinstance(obj, dict):
             return

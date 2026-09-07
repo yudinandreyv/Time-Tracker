@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QIcon
 from PyQt5.QtWidgets import (
     QAction,
@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
 
 from .collector import DeltaCollector
 from .file_storage import FileStorage
+from .i18n import _
 from .icons import gear_icon, pin_icon
 from .models import Tracker
 from .settings_dialog import SettingsDialog
@@ -39,14 +40,14 @@ class TrackerItem(QWidget):
         dot = QLabel("●")
         dot.setStyleSheet(f"color: {tracker.color};")
         self._name = QLabel(tracker.name)
-        self._status = QLabel("▶ в работе" if running else "—")
+        self._status = QLabel(_("running") if running else "—")
         self._status.setObjectName("hint" if not running else "trackerName")
         lay.addWidget(dot)
         lay.addWidget(self._name, stretch=1)
         lay.addWidget(self._status)
 
     def set_running(self, running: bool) -> None:
-        self._status.setText("▶ в работе" if running else "—")
+        self._status.setText(_("running") if running else "—")
 
 
 class MainWindow(QDialog):
@@ -62,6 +63,10 @@ class MainWindow(QDialog):
         self._stats_window: StatsWindow | None = None
         self._settings_window: SettingsDialog | None = None
         self._collector = DeltaCollector(storage, self)
+        self._reload_debounce = QTimer(self)
+        self._reload_debounce.setSingleShot(True)
+        self._reload_debounce.setInterval(50)
+        self._reload_debounce.timeout.connect(self._do_reload_list)
 
         self.setWindowTitle("Time Tracker")
         self.setWindowFlags(
@@ -96,7 +101,7 @@ class MainWindow(QDialog):
         self._pin_btn = QPushButton(pin_icon(), "")
         self._pin_btn.setFixedWidth(28)
         self._pin_btn.setCheckable(True)
-        self._tooltip.attach(self._pin_btn, "Поверх всех")
+        self._tooltip.attach(self._pin_btn, _("pin_main"))
         self._pin_btn.clicked.connect(self._toggle_main_on_top)
         title_row.addWidget(self._pin_btn)
         root.addLayout(title_row)
@@ -105,17 +110,18 @@ class MainWindow(QDialog):
         self._list.itemDoubleClicked.connect(self._on_item_double_clicked)
         root.addWidget(self._list, stretch=1)
 
-        btn_add = QPushButton("+ Добавить трекер")
+        btn_add = QPushButton(_("add_tracker"))
         btn_add.setObjectName("primary")
         self._btn_add = btn_add
         btn_add.clicked.connect(self.add_tracker)
         root.addWidget(btn_add)
 
-        btn_stats = QPushButton("Статистика")
+        btn_stats = QPushButton(_("statistics"))
         btn_stats.clicked.connect(self.open_stats)
+        self._btn_stats = btn_stats
         root.addWidget(btn_stats)
 
-        self._btn_toggle = QPushButton("Свернуть все")
+        self._btn_toggle = QPushButton(_("collapse_all"))
         self._btn_toggle.setObjectName("secondary")
         self._btn_toggle.clicked.connect(self._toggle_windows)
         root.addWidget(self._btn_toggle)
@@ -144,11 +150,11 @@ class MainWindow(QDialog):
     # --- Управление трекерами ---
 
     def add_tracker(self) -> None:
-        tracker = Tracker()  # имя "new tracker", поверх всех = False по умолчанию
+        tracker = Tracker()
         tracker = self._storage.save_tracker(tracker)
         if tracker.id is not None:
             tracker.name = f"new tracker_{tracker.id}"
-            tracker = self._storage.save_tracker(tracker)
+            self._storage.save_tracker(tracker)
         self.open_tracker_window(tracker)
 
     def open_tracker_window(self, tracker: Tracker) -> None:
@@ -176,6 +182,9 @@ class MainWindow(QDialog):
             self.open_tracker_window(trackers[idx])
 
     def _reload_list(self) -> None:
+        self._reload_debounce.start()
+
+    def _do_reload_list(self) -> None:
         self._list.clear()
         for tracker in self._storage.list_trackers():
             win = self._tracker_windows.get(tracker.id)
@@ -193,9 +202,9 @@ class MainWindow(QDialog):
         total = len(self._storage.list_trackers())
         open_count = len(self._tracker_windows)
         if open_count:
-            self._status_label.setText(f"{total} трекеров · {open_count} открыто")
+            self._status_label.setText(_("status_open", n=total, k=open_count))
         else:
-            self._status_label.setText(f"{total} трекеров · двойной клик — открыть")
+            self._status_label.setText(_("status_hint", n=total))
     # --- Обработчики событий ---
 
     def _on_position_changed(self, tracker_id: int, x: int, y: int) -> None:
@@ -234,17 +243,17 @@ class MainWindow(QDialog):
         tray.setToolTip("Time Tracker")
 
         menu = QMenu()
-        act_show = QAction("Показать окна", menu)
+        act_show = QAction(_("tray_show"), menu)
         act_show.triggered.connect(self.restore_windows)
         menu.addAction(act_show)
 
-        act_hide = QAction("Свернуть в трей", menu)
+        act_hide = QAction(_("tray_minimize"), menu)
         act_hide.triggered.connect(self.minimize_to_tray)
         menu.addAction(act_hide)
 
         menu.addSeparator()
 
-        act_quit = QAction("Выход", menu)
+        act_quit = QAction(_("tray_quit"), menu)
         act_quit.triggered.connect(self.quit_app)
         menu.addAction(act_quit)
 
@@ -257,7 +266,7 @@ class MainWindow(QDialog):
 
     def _update_toggle_label(self) -> None:
         any_visible = any(w.isVisible() for w in self._tracker_windows.values())
-        self._btn_toggle.setText("Свернуть все" if any_visible else "Развернуть все")
+        self._btn_toggle.setText(_("collapse_all") if any_visible else _("expand_all"))
 
     def _toggle_windows(self) -> None:
         any_visible = any(w.isVisible() for w in self._tracker_windows.values())
@@ -326,9 +335,19 @@ class MainWindow(QDialog):
             win.activateWindow()
             return
         win = SettingsDialog(self._storage)
+        win.set_on_language_changed(self._update_main_texts)
         win.finished.connect(self._on_settings_destroyed)
         self._settings_window = win
         win.show()
+
+    def _update_main_texts(self) -> None:
+        self._btn_add.setText(_("add_tracker"))
+        self._btn_stats.setText(_("statistics"))
+        self._btn_toggle.setText(_("collapse_all"))
+        self._update_status()
+        self._update_toggle_label()
+        if self._stats_window is not None and self._stats_window.isVisible():
+            self._stats_window._refresh_texts()
 
     def _on_settings_destroyed(self, *_args) -> None:
         self._settings_window = None
@@ -358,11 +377,11 @@ class MainWindow(QDialog):
         self._reload_list()
 
     def closeEvent(self, event) -> None:
-        # Закрытие главного окна сворачивает приложение в трей (фоновый режим).
         if self._tray is not None and self._tray.isVisible():
             event.ignore()
             self.minimize_to_tray()
             return
+        self._collector.stop()
         for win in list(self._tracker_windows.values()):
             win.close()
         super().closeEvent(event)

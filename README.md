@@ -10,16 +10,6 @@
 - **Статистика** — по дням, по трекерам, общее. Всегда совпадает с таймером (1:1)
 - **Тёмная тема** — минималистичный дизайн, белые подсказки, градиентные кнопки
 
-## Установка
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python main.py
-```
-
-Данные: `~/.local/share/time-tracker/data.bin`
 
 ## Сборка бинарника
 
@@ -55,4 +45,4 @@ GitHub Actions собирает автоматически:
 - **Linux** (`ubuntu-latest`) → `time-tracker`
 - **macOS** (`macos-latest`) → `TimeTracker.app`
 
-Запуск: Actions → Run workflow → скачать Artifacts.
+
